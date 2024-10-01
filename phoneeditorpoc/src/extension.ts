@@ -115,7 +115,7 @@ class PhoneEditorPoCPanel {
     /**
      * https://code.visualstudio.com/api/references/vscode-api#Webview
      * onDidReceiveMessage
-     * @param callback パネルが閉じたときに呼ばれる関数
+     * @param callback messageを受け取ったときに呼ばれる関数
      */
     this._panel.webview.onDidReceiveMessage(
       (message) => {
