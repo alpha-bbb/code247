@@ -1,4 +1,7 @@
+import path from "path";
 import * as vscode from "vscode";
+import * as fs from "fs";
+import { stringify } from "querystring";
 
 /**
  * 拡張機能が有効になったときに呼ばれる (最初に立ち上がったときとか)
@@ -38,6 +41,7 @@ class PhoneEditorPoCPanel {
 
   private readonly _panel: vscode.WebviewPanel;
   private _disposables: vscode.Disposable[] = [];
+  private radialMenuDecoration: vscode.TextEditorDecorationType | null = null;
 
   /**
    * 1度も開いたことがない場合は新しく作成し、開いている場合は表示する
@@ -102,7 +106,10 @@ class PhoneEditorPoCPanel {
      * パネルのwebview
      * ここにHTMLを入れることで表示することができる
      */
-    this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
+    this._panel.webview.html = this._getHtmlForWebview(
+      this._panel.webview,
+      extensionUri,
+    );
 
     /**
      * https://code.visualstudio.com/api/references/vscode-api#WebviewPanel
@@ -119,23 +126,37 @@ class PhoneEditorPoCPanel {
      */
     this._panel.webview.onDidReceiveMessage(
       (message) => {
-        switch (message.message) {
-          case "windowSplit":
-            /**
-             * 新規ファイルを生成して表示する
-             */
-            vscode.workspace
-              .openTextDocument({ content: "", language: "plaintext" })
-              .then((document) => {
-                vscode.window.showTextDocument(
-                  document,
-                  vscode.ViewColumn.Beside,
-                );
-              });
-            /**
-             * informationMessageを表示する
-             */
-            vscode.window.showInformationMessage("windowSplit");
+        vscode.window.showInformationMessage("Hello", message);
+        const editor = vscode.window.activeTextEditor;
+        switch (message.command) {
+          case "startRadialMenu":
+            vscode.window.showInformationMessage("joystickStart", message.data);
+            if (editor) {
+              this.showRadialMenu(
+                editor,
+                message.data.position.x,
+                message.data.position.y,
+              );
+            }
+            break;
+          case "updateRadialMenu":
+            vscode.window.showInformationMessage(
+              "joystickUpdate",
+              message.data,
+            );
+            if (editor) {
+              this.updateRadialMenu(
+                editor,
+                message.data.position.x,
+                message.data.position.y,
+              );
+            }
+            break;
+          case "endRadialMenu":
+            vscode.window.showInformationMessage("joystickEnd", message.data);
+            if (editor) {
+              this.hideRadialMenu(editor);
+            }
             break;
         }
       },
@@ -144,24 +165,100 @@ class PhoneEditorPoCPanel {
     );
   }
 
-  private _getHtmlForWebview(webview: vscode.Webview) {
-    return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AAAAAAAAA</title>
-  <script>
-    const vscode = acquireVsCodeApi();
-  </script>
-</head>
-<body>
-  <h1 id="lines-of-code-counter">Hello World</h1>
-  <button onclick="vscode.postMessage({ message: 'windowSplit'})">Window Split</button>
-</body>
-</html>
-      `;
+  private _getHtmlForWebview(
+    webview: vscode.Webview,
+    extensionPath: vscode.Uri,
+  ) {
+    const htmlPath = vscode.Uri.joinPath(
+      extensionPath,
+      "html",
+      "joystick.html",
+    );
+    const htmlUri = webview.asWebviewUri(htmlPath);
+    const htmlContent = fs.readFileSync(htmlUri.fsPath, "utf-8");
+
+    return htmlContent;
+  }
+
+  private showRadialMenu(editor: vscode.TextEditor, x: number, y: number) {
+    const rgbaGreen = "rgba(115, 209, 68, 0.3)";
+    const rgbaBlank = "rgba(255, 255, 255, 0.1)";
+
+    const angle = Math.atan2(y, x) * (180 / Math.PI);
+
+    // 45度区切り
+    let selectedMenu = 0;
+    if (angle >= -90 && angle < -45) {
+      selectedMenu = 0;
+    } else if (angle >= -45 && angle < 0) {
+      selectedMenu = 1;
+    } else if (angle >= 0 && angle < 45) {
+      selectedMenu = 2;
+    } else if (angle >= 45 && angle < 90) {
+      selectedMenu = 3;
+    } else if (angle >= 90 && angle < 135) {
+      selectedMenu = 4;
+    } else if (angle >= 135 && angle <= 180) {
+      selectedMenu = 5;
+    } else if (angle >= -180 && angle < -135) {
+      selectedMenu = 6;
+    } else if (angle >= -135 && angle < -90) {
+      selectedMenu = 7;
+    }
+
+    const quadrantColors = [
+      selectedMenu === 0 ? rgbaGreen : rgbaBlank,
+      selectedMenu === 1 ? rgbaGreen : rgbaBlank,
+      selectedMenu === 2 ? rgbaGreen : rgbaBlank,
+      selectedMenu === 3 ? rgbaGreen : rgbaBlank,
+      selectedMenu === 4 ? rgbaGreen : rgbaBlank,
+      selectedMenu === 5 ? rgbaGreen : rgbaBlank,
+      selectedMenu === 6 ? rgbaGreen : rgbaBlank,
+      selectedMenu === 7 ? rgbaGreen : rgbaBlank,
+    ];
+
+    const cssString = `
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: conic-gradient(
+    ${quadrantColors[0]} 0deg 45deg,
+    ${quadrantColors[1]} 45deg 90deg,
+    ${quadrantColors[2]} 90deg 135deg,
+    ${quadrantColors[3]} 135deg 180deg,
+    ${quadrantColors[4]} 180deg 225deg,
+    ${quadrantColors[5]} 225deg 270deg,
+    ${quadrantColors[6]} 270deg 315deg,
+    ${quadrantColors[7]} 315deg 360deg
+  );
+  `;
+
+    this.radialMenuDecoration = vscode.window.createTextEditorDecorationType({
+      before: {
+        contentText: "",
+        textDecoration: `none; ${cssString}`,
+      },
+      isWholeLine: false,
+    });
+
+    const position = new vscode.Position(0, 0);
+    editor.setDecorations(this.radialMenuDecoration, [
+      { range: new vscode.Range(position, position) },
+    ]);
+  }
+
+  private updateRadialMenu(editor: vscode.TextEditor, x: number, y: number) {
+    this.hideRadialMenu(editor);
+    this.showRadialMenu(editor, x, y);
+  }
+
+  private hideRadialMenu(editor: vscode.TextEditor) {
+    if (this.radialMenuDecoration === null) {
+      return;
+    }
+    editor.setDecorations(this.radialMenuDecoration, []);
+    this.radialMenuDecoration = null;
   }
 
   public dispose() {
