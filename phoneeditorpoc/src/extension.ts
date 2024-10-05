@@ -1,7 +1,4 @@
-import path from "path";
 import * as vscode from "vscode";
-import * as fs from "fs";
-import { stringify } from "querystring";
 
 /**
  * 拡張機能が有効になったときに呼ばれる (最初に立ち上がったときとか)
@@ -106,10 +103,7 @@ class PhoneEditorPoCPanel {
      * パネルのwebview
      * ここにHTMLを入れることで表示することができる
      */
-    this._panel.webview.html = this._getHtmlForWebview(
-      this._panel.webview,
-      extensionUri,
-    );
+    this._setWebviewContent(this._panel.webview, extensionUri);
 
     /**
      * https://code.visualstudio.com/api/references/vscode-api#WebviewPanel
@@ -165,7 +159,15 @@ class PhoneEditorPoCPanel {
     );
   }
 
-  private _getHtmlForWebview(
+  private async _setWebviewContent(
+    webview: vscode.Webview,
+    extensionUri: vscode.Uri,
+  ) {
+    const htmlContent = await this._getHtmlForWebview(webview, extensionUri);
+    webview.html = htmlContent;
+  }
+
+  private async _getHtmlForWebview(
     webview: vscode.Webview,
     extensionPath: vscode.Uri,
   ) {
@@ -174,8 +176,9 @@ class PhoneEditorPoCPanel {
       "html",
       "joystick.html",
     );
-    const htmlUri = webview.asWebviewUri(htmlPath);
-    const htmlContent = fs.readFileSync(htmlUri.fsPath, "utf-8");
+
+    const data = await vscode.workspace.fs.readFile(htmlPath);
+    const htmlContent = new TextDecoder("utf-8").decode(data);
 
     return htmlContent;
   }
