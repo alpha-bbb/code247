@@ -18,23 +18,23 @@ export function activate(context: vscode.ExtensionContext) {
      * @param command コマンドの名前
      * @param callback コマンドが実行されたときに呼ばれる関数
      */
-    vscode.commands.registerCommand("phoneeditorpoc.start", () => {
+    vscode.commands.registerCommand("code247.start", () => {
       /**
        * https://code.visualstudio.com/api/references/vscode-api#ExtensionContext
        * extensionUri
        * 拡張機能のあるディレクトリのURI
        * このURIを使って、拡張機能の画像とかのPATHを指定する
        */
-      PhoneEditorPoCPanel.createOrShow(context.extensionUri);
+      Code247Panel.createOrShow(context.extensionUri);
     }),
   );
 }
 
-class PhoneEditorPoCPanel {
-  public static currentPanel: PhoneEditorPoCPanel | undefined;
+class Code247Panel {
+  public static currentPanel: Code247Panel | undefined;
 
   public static readonly viewType = "windowMode";
-  public static readonly title = "phoneeditorpoc";
+  public static readonly title = "code247";
 
   private readonly _panel: vscode.WebviewPanel;
   private _disposables: vscode.Disposable[] = [];
@@ -60,14 +60,14 @@ class PhoneEditorPoCPanel {
         vscode.window.activeTextEditor.viewColumn
       : undefined;
 
-    if (PhoneEditorPoCPanel.currentPanel) {
+    if (Code247Panel.currentPanel) {
       /**
        * https://code.visualstudio.com/api/references/vscode-api#WebviewPanel
        * reveal
        * パネルを指定した位置に表示する
        * @param viewColumn パネルの表示位置
        */
-      PhoneEditorPoCPanel.currentPanel._panel.reveal(column);
+      Code247Panel.currentPanel._panel.reveal(column);
       return;
     }
 
@@ -81,18 +81,15 @@ class PhoneEditorPoCPanel {
      * @param options パネルのオプション
      */
     const panel = vscode.window.createWebviewPanel(
-      PhoneEditorPoCPanel.viewType,
-      PhoneEditorPoCPanel.title,
+      Code247Panel.viewType,
+      Code247Panel.title,
       column || vscode.ViewColumn.One,
       {
         enableScripts: true,
       },
     );
 
-    PhoneEditorPoCPanel.currentPanel = new PhoneEditorPoCPanel(
-      panel,
-      extensionUri,
-    );
+    Code247Panel.currentPanel = new Code247Panel(panel, extensionUri);
   }
 
   public constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
@@ -265,7 +262,7 @@ class PhoneEditorPoCPanel {
   }
 
   public dispose() {
-    PhoneEditorPoCPanel.currentPanel = undefined;
+    Code247Panel.currentPanel = undefined;
     this._panel.dispose();
     while (this._disposables.length) {
       const x = this._disposables.pop();

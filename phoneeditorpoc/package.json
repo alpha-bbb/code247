@@ -1,6 +1,6 @@
 {
-  "name": "phoneeditorpoc",
-  "displayName": "phoneEditorPoc",
+  "name": "code247",
+  "displayName": "code247",
   "description": "phone's editor",
   "repository": {
     "type": "git",
@@ -19,7 +19,7 @@
   "contributes": {
     "commands": [
       {
-        "command": "phoneeditorpoc.start",
+        "command": "code247.start",
         "title": "start",
         "category": "Phone Editor"
       }

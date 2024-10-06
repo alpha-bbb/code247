@@ -1,4 +1,4 @@
-# phoneeditorpoc README
+# code247 README
 
 ## 拡張機能を作成
 
