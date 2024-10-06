@@ -1,13 +1,5 @@
-# code247 README
+# Code247
 
-## 拡張機能を作成
+## 概要
 
-```sh
-vsce package
-```
-
-## コンパイル
-
-```sh
-npm run compile
-```
+VSCodeにスマホで操作がしやすいUIを追加する拡張機能
