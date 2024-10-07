@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virtual Joystick</title>
+  <script>
+    const vscode = acquireVsCodeApi();
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.2/nipplejs.min.js" integrity="sha512-sUnIEQH0OU2+TxkJnubDC9KJBCeeh0RjvFhvsFx1sOTN5rfhIJ0ESgg/YH0NHgByCOin+zBTJFL+nEL0llyGLQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    #joystick-container {
+      width: 100%;
+      height: 100%;
+      background-color: #1f2937;
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div id="joystick-container"></div>
+
+  <script>
+    const joystickContainer = document.getElementById('joystick-container');
+    let manager;
+    let startPosition = { x: 0, y: 0 };
+    let movePosition = { x: 0, y: 0 };
+
+    manager = nipplejs.create({
+      zone: joystickContainer,
+      mode: 'dynamic',
+      color: 'blue',
+      catchDistance: 150,
+    });
+
+    manager.on('start', (evt, data) => {
+      startPosition = { x: data.position.x, y: data.position.y };
+      vscode.postMessage({
+        command:"startRadialMenu",
+        data: {
+          position: startPosition,
+        },
+      });
+    });
+
+    manager.on('move', (evt, data) => {
+      const relativeX = data.position.x - startPosition.x;
+      const relativeY = data.position.y - startPosition.y;
+      movePosition = { x: relativeX, y: relativeY };
+      vscode.postMessage({
+        command:"updateRadialMenu",
+        data: {
+          position: movePosition,
+        },
+      });
+
+    });
+
+    manager.on('end', (evt, data) => {
+      vscode.postMessage({
+        command: 'endRadialMenu',
+        date: {
+          position: movePosition,
+        },
+      });
+    });
+  </script>
+</body>
+</html>
+

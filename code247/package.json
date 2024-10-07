@@ -1,7 +1,11 @@
 {
-  "name": "phoneeditorpoc",
-  "displayName": "phoneEditorPoc",
+  "name": "code247",
+  "displayName": "code247",
   "description": "phone's editor",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alpha-bbb/POC.git"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.93.0"
@@ -11,11 +15,13 @@
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
+  "browser": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "phoneeditorpoc.helloWorld",
-        "title": "Hello World"
+        "command": "code247.start",
+        "title": "start",
+        "category": "Phone Editor"
       }
     ]
   },
@@ -25,17 +31,20 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "open-in-browser": "vscode-test-web --extensionDevelopmentPath=. ."
   },
   "devDependencies": {
-    "@types/vscode": "^1.93.0",
     "@types/mocha": "^10.0.7",
     "@types/node": "20.x",
+    "@types/vscode": "^1.93.0",
     "@typescript-eslint/eslint-plugin": "^8.3.0",
     "@typescript-eslint/parser": "^8.3.0",
-    "eslint": "^9.9.1",
-    "typescript": "^5.5.4",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1"
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/test-web": "^0.0.62",
+    "eslint": "^9.9.1",
+    "prettier": "3.3.3",
+    "typescript": "^5.5.4"
   }
 }
