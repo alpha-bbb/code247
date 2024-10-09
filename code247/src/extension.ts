@@ -117,37 +117,10 @@ class Code247Panel {
      */
     this._panel.webview.onDidReceiveMessage(
       (message) => {
-        vscode.window.showInformationMessage("Hello", message);
         const editor = vscode.window.activeTextEditor;
         switch (message.command) {
-          case "startRadialMenu":
-            vscode.window.showInformationMessage("joystickStart", message.data);
-            if (editor) {
-              this.showRadialMenu(
-                editor,
-                message.data.position.x,
-                message.data.position.y,
-              );
-            }
-            break;
-          case "updateRadialMenu":
-            vscode.window.showInformationMessage(
-              "joystickUpdate",
-              message.data,
-            );
-            if (editor) {
-              this.updateRadialMenu(
-                editor,
-                message.data.position.x,
-                message.data.position.y,
-              );
-            }
-            break;
-          case "endRadialMenu":
-            vscode.window.showInformationMessage("joystickEnd", message.data);
-            if (editor) {
-              this.hideRadialMenu(editor);
-            }
+          case "joystick":
+            this.joystick(message, editor);
             break;
         }
       },
@@ -178,6 +151,45 @@ class Code247Panel {
     const htmlContent = new TextDecoder("utf-8").decode(data);
 
     return htmlContent;
+  }
+
+  private joystick(message: any, editor: vscode.TextEditor | undefined) {
+    switch (message.data.mode) {
+      case "menu":
+        this.joystickMenu(message, editor);
+        break;
+    }
+  }
+
+  private joystickMenu(message: any, editor: vscode.TextEditor | undefined) {
+    switch (message.data.status) {
+      case "start":
+        vscode.window.showInformationMessage("joystickStart", message.data);
+        if (editor) {
+          this.showRadialMenu(
+            editor,
+            message.data.position.x,
+            message.data.position.y,
+          );
+        }
+        break;
+      case "update":
+        vscode.window.showInformationMessage("joystickUpdate", message.data);
+        if (editor) {
+          this.updateRadialMenu(
+            editor,
+            message.data.position.x,
+            message.data.position.y,
+          );
+        }
+        break;
+      case "end":
+        vscode.window.showInformationMessage("joystickEnd", message.data);
+        if (editor) {
+          this.hideRadialMenu(editor);
+        }
+        break;
+    }
   }
 
   private showRadialMenu(editor: vscode.TextEditor, x: number, y: number) {
