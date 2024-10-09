@@ -25,8 +25,15 @@ export function activate(context: vscode.ExtensionContext) {
        * 拡張機能のあるディレクトリのURI
        * このURIを使って、拡張機能の画像とかのPATHを指定する
        */
+      vscode.commands.executeCommand("workbench.action.splitEditorDown"),
       Code247Panel.createOrShow(context.extensionUri);
     }),
+    vscode.commands.registerCommand("code247.splitEditorDown", () => {
+      vscode.commands.executeCommand("workbench.action.splitEditorDown");
+    }),
+    vscode.commands.registerCommand("code247.splitEditorRight", () => {
+      vscode.commands.executeCommand("workbench.action.splitEditorRight");
+    })
   );
 }
 
@@ -149,6 +156,12 @@ class Code247Panel {
               this.hideRadialMenu(editor);
             }
             break;
+            case "splitEditorDown":
+              vscode.commands.executeCommand("workbench.action.splitEditorDown");
+              break;
+            case "splitEditorRight":
+              vscode.commands.executeCommand("workbench.action.splitEditorRight");
+              break;
         }
       },
       null,

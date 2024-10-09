@@ -18,14 +18,30 @@
 
     #joystick-container {
       width: 100%;
-      height: 100%;
+      height: 80%;
       background-color: #1f2937;
       position: relative;
+    }
+    #buttons {
+      display: flex;
+      justify-content: left;
+      margin-top: 10px;
+    }
+
+    button {
+      margin: 0 5px;
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <div id="joystick-container"></div>
+  <div id="buttons">
+    <button id="splitDown">splitDown</button>
+    <button id="splitRight">splitRight</button>
+  </div>
 
   <script>
     const joystickContainer = document.getElementById('joystick-container');
@@ -66,11 +82,20 @@
     manager.on('end', (evt, data) => {
       vscode.postMessage({
         command: 'endRadialMenu',
-        date: {
+        data: {
           position: movePosition,
         },
       });
     });
+
+    document.getElementById('splitDown').onclick = () => {
+      vscode.postMessage({ command: 'splitEditorDown' });
+    };
+
+    document.getElementById('splitRight').onclick = () => {
+      vscode.postMessage({ command: 'splitEditorRight' });
+    };
+
   </script>
 </body>
 </html>

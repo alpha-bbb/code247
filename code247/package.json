@@ -22,6 +22,14 @@
         "command": "code247.start",
         "title": "start",
         "category": "Phone Editor"
+      },
+      {
+        "command": "code247.splitEditorDown",
+        "title": "Split Editor Down"
+      },
+      {
+        "command": "code247.splitEditorRight",
+        "title": "Split Editor Right"
       }
     ]
   },
