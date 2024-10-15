@@ -18,14 +18,26 @@ export function activate(context: vscode.ExtensionContext) {
      * @param command コマンドの名前
      * @param callback コマンドが実行されたときに呼ばれる関数
      */
-    vscode.commands.registerCommand("code247.start", () => {
+    vscode.commands.registerCommand("code247.start", async () => {
       /**
        * https://code.visualstudio.com/api/references/vscode-api#ExtensionContext
        * extensionUri
        * 拡張機能のあるディレクトリのURI
        * このURIを使って、拡張機能の画像とかのPATHを指定する
        */
-      vscode.commands.executeCommand("workbench.action.splitEditorDown"),
+      // const editor = vscode.window.activeTextEditor;
+
+      // if (editor) {
+      //   await vscode.commands.executeCommand("workbench.action.splitEditorDown");
+    
+      //   // 分割された領域にアクティブなドキュメントを表示して、領域をアクティブにする
+      //   const document = editor.document;
+      //   await vscode.window.showTextDocument(document, { viewColumn: vscode.ViewColumn.Beside });
+
+      // }
+
+
+      vscode.commands.executeCommand("workbench.action.splitEditorDown");
       Code247Panel.createOrShow(context.extensionUri);
     }),
     vscode.commands.registerCommand("code247.splitEditorDown", () => {
@@ -90,7 +102,9 @@ class Code247Panel {
     const panel = vscode.window.createWebviewPanel(
       Code247Panel.viewType,
       Code247Panel.title,
-      column || vscode.ViewColumn.One,
+      // column || vscode.ViewColumn.One,
+      // vscode.ViewColumn.Beside,
+      vscode.ViewColumn.Active,
       {
         enableScripts: true,
       },
