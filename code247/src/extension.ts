@@ -35,6 +35,8 @@ class Code247Panel {
 
   public static readonly viewType = "windowMode";
   public static readonly title = "code247";
+  public static joystickLastStartedAt: Date | null = null;
+  public static isDoubleTap: boolean = false;
 
   private readonly _panel: vscode.WebviewPanel;
   private _disposables: vscode.Disposable[] = [];
@@ -164,7 +166,22 @@ class Code247Panel {
   private joystickMenu(message: any, editor: vscode.TextEditor | undefined) {
     switch (message.data.status) {
       case "start":
-        vscode.window.showInformationMessage("joystickStart", message.data);
+        if (Code247Panel.joystickLastStartedAt) {
+          const now = new Date();
+          const diff =
+            now.getTime() - Code247Panel.joystickLastStartedAt.getTime();
+          let joystickDoubleTapInterval: number | undefined = vscode.workspace
+            .getConfiguration("code247")
+            .get("joystickDoubleTapInterval");
+          if (typeof joystickDoubleTapInterval !== "number") {
+            joystickDoubleTapInterval = 1000;
+          }
+          if (diff < joystickDoubleTapInterval) {
+            Code247Panel.isDoubleTap = true;
+          } else {
+            Code247Panel.isDoubleTap = false;
+          }
+        }
         if (editor) {
           this.showRadialMenu(
             editor,
@@ -172,9 +189,9 @@ class Code247Panel {
             message.data.position.y,
           );
         }
+        Code247Panel.joystickLastStartedAt = new Date();
         break;
       case "update":
-        vscode.window.showInformationMessage("joystickUpdate", message.data);
         if (editor) {
           this.updateRadialMenu(
             editor,
@@ -184,7 +201,6 @@ class Code247Panel {
         }
         break;
       case "end":
-        vscode.window.showInformationMessage("joystickEnd", message.data);
         if (editor) {
           this.hideRadialMenu(editor);
         }
@@ -194,6 +210,8 @@ class Code247Panel {
 
   private showRadialMenu(editor: vscode.TextEditor, x: number, y: number) {
     const rgbaGreen = "rgba(115, 209, 68, 0.3)";
+    const rgbaOrange = "rgba(255, 211, 72, 0.3)";
+    const rgbaFront = Code247Panel.isDoubleTap ? rgbaOrange : rgbaGreen;
     const rgbaBlank = "rgba(255, 255, 255, 0.1)";
 
     const angle = Math.atan2(y, x) * (180 / Math.PI);
@@ -219,14 +237,14 @@ class Code247Panel {
     }
 
     const quadrantColors = [
-      selectedMenu === 0 ? rgbaGreen : rgbaBlank,
-      selectedMenu === 1 ? rgbaGreen : rgbaBlank,
-      selectedMenu === 2 ? rgbaGreen : rgbaBlank,
-      selectedMenu === 3 ? rgbaGreen : rgbaBlank,
-      selectedMenu === 4 ? rgbaGreen : rgbaBlank,
-      selectedMenu === 5 ? rgbaGreen : rgbaBlank,
-      selectedMenu === 6 ? rgbaGreen : rgbaBlank,
-      selectedMenu === 7 ? rgbaGreen : rgbaBlank,
+      selectedMenu === 0 ? rgbaFront : rgbaBlank,
+      selectedMenu === 1 ? rgbaFront : rgbaBlank,
+      selectedMenu === 2 ? rgbaFront : rgbaBlank,
+      selectedMenu === 3 ? rgbaFront : rgbaBlank,
+      selectedMenu === 4 ? rgbaFront : rgbaBlank,
+      selectedMenu === 5 ? rgbaFront : rgbaBlank,
+      selectedMenu === 6 ? rgbaFront : rgbaBlank,
+      selectedMenu === 7 ? rgbaFront : rgbaBlank,
     ];
 
     const cssString = `
