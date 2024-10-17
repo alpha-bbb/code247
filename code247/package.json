@@ -21,9 +21,28 @@
       {
         "command": "code247.start",
         "title": "start",
-        "category": "Phone Editor"
+        "category": "code247"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "code247",
+      "properties": {
+        "code247.mode": {
+          "type": [
+            "string"
+          ],
+          "default": "menu",
+          "description": "code247 mode"
+        },
+        "code247.joystickDoubleTapInterval": {
+          "type": [
+            "number"
+          ],
+          "default": 1000,
+          "description": "code247 Joystick Double Tap Interval"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

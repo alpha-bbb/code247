@@ -43,8 +43,10 @@
     manager.on('start', (evt, data) => {
       startPosition = { x: data.position.x, y: data.position.y };
       vscode.postMessage({
-        command:"startRadialMenu",
+        command:"joystick",
         data: {
+          mode:"menu",
+          status: "start",
           position: startPosition,
         },
       });
@@ -55,8 +57,10 @@
       const relativeY = data.position.y - startPosition.y;
       movePosition = { x: relativeX, y: relativeY };
       vscode.postMessage({
-        command:"updateRadialMenu",
+        command:"joystick",
         data: {
+          mode:"menu",
+          status:"update",
           position: movePosition,
         },
       });
@@ -65,8 +69,10 @@
 
     manager.on('end', (evt, data) => {
       vscode.postMessage({
-        command: 'endRadialMenu',
-        date: {
+        command:"joystick",
+        data: {
+          mode:"menu",
+          status:"end",
           position: movePosition,
         },
       });
