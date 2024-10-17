@@ -40,7 +40,7 @@ class Code247Panel {
 
   private readonly _panel: vscode.WebviewPanel;
   private _disposables: vscode.Disposable[] = [];
-  private radialMenuDecoration: vscode.TextEditorDecorationType | null = null;
+  private radialMenuDecoration: vscode.TextEditorDecorationType[] = [];
 
   /**
    * 1度も開いたことがない場合は新しく作成し、開いている場合は表示する
@@ -264,31 +264,34 @@ class Code247Panel {
   );
   `;
 
-    this.radialMenuDecoration = vscode.window.createTextEditorDecorationType({
-      before: {
-        contentText: "",
-        textDecoration: `none; ${cssString}`,
-      },
-      isWholeLine: false,
-    });
+    this.radialMenuDecoration.push(
+      vscode.window.createTextEditorDecorationType({
+        before: {
+          contentText: "",
+          textDecoration: `none; ${cssString}`,
+        },
+        isWholeLine: false,
+      }),
+    );
 
     const position = new vscode.Position(0, 0);
-    editor.setDecorations(this.radialMenuDecoration, [
-      { range: new vscode.Range(position, position) },
-    ]);
+    editor.setDecorations(
+      this.radialMenuDecoration[this.radialMenuDecoration.length - 1],
+      [{ range: new vscode.Range(position, position) }],
+    );
   }
 
   private updateRadialMenu(editor: vscode.TextEditor, x: number, y: number) {
-    this.hideRadialMenu(editor);
     this.showRadialMenu(editor, x, y);
+    this.hideRadialMenu(editor);
   }
 
   private hideRadialMenu(editor: vscode.TextEditor) {
-    if (this.radialMenuDecoration === null) {
+    if (this.radialMenuDecoration.length === 0) {
       return;
     }
-    editor.setDecorations(this.radialMenuDecoration, []);
-    this.radialMenuDecoration = null;
+    const decorator = this.radialMenuDecoration.shift();
+    decorator?.dispose();
   }
 
   public dispose() {
