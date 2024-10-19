@@ -170,12 +170,9 @@ class Code247Panel {
           const now = new Date();
           const diff =
             now.getTime() - Code247Panel.joystickLastStartedAt.getTime();
-          let joystickDoubleTapInterval: number | undefined = vscode.workspace
+          let joystickDoubleTapInterval = vscode.workspace
             .getConfiguration("code247")
-            .get("joystickDoubleTapInterval");
-          if (typeof joystickDoubleTapInterval !== "number") {
-            joystickDoubleTapInterval = 1000;
-          }
+            .get<number>("joystickDoubleTapInterval", 1000);
           if (diff < joystickDoubleTapInterval) {
             Code247Panel.isDoubleTap = true;
           } else {
