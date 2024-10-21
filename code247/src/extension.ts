@@ -36,7 +36,10 @@ class Code247Panel {
   public static readonly viewType = "windowMode";
   public static readonly title = "code247";
   public static joystickLastStartedAt: Date | null = null;
+  public static joystickLastCursorMove: Date | null = null;
   public static isDoubleTap: boolean = false;
+  public static cursorMoveSetinterval: NodeJS.Timeout | null = null;
+  public static cursorPosition = new vscode.Position(0, 0);
 
   private readonly _panel: vscode.WebviewPanel;
   private _disposables: vscode.Disposable[] = [];
@@ -195,12 +198,18 @@ class Code247Panel {
             message.data.position.x,
             message.data.position.y,
           );
+          this.startSelection(
+            editor,
+            message.data.position.x,
+            message.data.position.y,
+          );
         }
         break;
       case "end":
         if (editor) {
           this.hideRadialMenu(editor);
         }
+        this.endSelection();
         break;
     }
   }
@@ -289,6 +298,76 @@ class Code247Panel {
     }
     const decorator = this.radialMenuDecoration.shift();
     decorator?.dispose();
+  }
+
+  private startSelection(editor: vscode.TextEditor, x: number, y: number) {
+    const joystickCenterRange = vscode.workspace
+      .getConfiguration("code247")
+      .get<number>("joystickCenterRange", 10);
+    if (
+      Math.abs(x) < joystickCenterRange &&
+      Math.abs(y) < joystickCenterRange
+    ) {
+      return;
+    }
+    if (Code247Panel.cursorMoveSetinterval) {
+      clearInterval(Code247Panel.cursorMoveSetinterval);
+    }
+
+    const joystickCursorSpeed = vscode.workspace
+      .getConfiguration("code247")
+      .get<number>("joystickCursorSpeed", 50);
+
+    const moveCursor = () => {
+      const now = new Date();
+      if (
+        Code247Panel.joystickLastCursorMove &&
+        now.getTime() - Code247Panel.joystickLastCursorMove.getTime() <
+          1000 / joystickCursorSpeed
+      ) {
+        return;
+      }
+      const cursorPosition = editor?.selection.active;
+      if (!cursorPosition) {
+        return;
+      }
+
+      if (!Code247Panel.isDoubleTap) {
+        Code247Panel.cursorPosition = cursorPosition;
+      }
+
+      const newY = cursorPosition.line + Math.sign(y);
+      const newLine =
+        newY < 0
+          ? 0
+          : newY >= editor.document.lineCount
+            ? editor.document.lineCount - 1
+            : newY;
+      const lineText = editor.document.lineAt(newLine).text;
+      const maxCharacter = lineText.length;
+      const newX = cursorPosition.character + Math.sign(x);
+      const newCharacter =
+        newX < 0 ? 0 : newX > maxCharacter ? maxCharacter : newX;
+      var newPosition = cursorPosition.with(newLine, newCharacter);
+      var newSelection = new vscode.Selection(
+        Code247Panel.isDoubleTap ? Code247Panel.cursorPosition : newPosition,
+        newPosition,
+      );
+      editor.selection = newSelection;
+
+      Code247Panel.joystickLastCursorMove = new Date();
+    };
+    moveCursor();
+    Code247Panel.cursorMoveSetinterval = setInterval(
+      moveCursor,
+      1000 / joystickCursorSpeed,
+    );
+  }
+
+  private endSelection() {
+    if (Code247Panel.cursorMoveSetinterval) {
+      clearInterval(Code247Panel.cursorMoveSetinterval);
+    }
   }
 
   public dispose() {
