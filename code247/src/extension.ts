@@ -1,38 +1,79 @@
 import * as vscode from "vscode";
+import * as path from 'path';
+import * as fs from 'fs';
 
 /**
  * 拡張機能が有効になったときに呼ばれる (最初に立ち上がったときとか)
  */
 export function activate(context: vscode.ExtensionContext) {
-  /**
-   * https://code.visualstudio.com/api/references/vscode-api#ExtensionContext
-   * subscriptions
-   * 拡張機能が無効になったときに破棄される配列
-   * 基本的にはここにDisposableを返すAPIをpushして関数を呼び出していく
-   */
   context.subscriptions.push(
-    /**
-     * https://code.visualstudio.com/api/extension-guides/command#registering-a-command
-     * registerCommand
-     * コマンドの名前は package.jsonや keybindings.json とか executeCommand から呼び出して使う
-     * @param command コマンドの名前
-     * @param callback コマンドが実行されたときに呼ばれる関数
-     */
     vscode.commands.registerCommand("code247.start", () => {
-      /**
-       * https://code.visualstudio.com/api/references/vscode-api#ExtensionContext
-       * extensionUri
-       * 拡張機能のあるディレクトリのURI
-       * このURIを使って、拡張機能の画像とかのPATHを指定する
-       */
       Code247Panel.createOrShow(context.extensionUri);
     }),
   );
+
+  // 実行コマンド
+  let runCommand = vscode.commands.registerCommand('code247.runCommand', () => {
+    vscode.window.showInformationMessage('プログラムを実行します！');
+    const terminal = vscode.window.createTerminal('Run Program');
+    terminal.show();
+    terminal.sendText('node ${file}'); // ここでプログラムの実行コマンドを変更できます
+  });
+
+  // デバッグコマンド
+  let debugCommand = vscode.commands.registerCommand('code247.debugCommand', () => {
+    vscode.window.showInformationMessage('デバッグを開始します！');
+    const debugConfig: vscode.DebugConfiguration = {
+      type: 'node',
+      request: 'launch',
+      name: 'Launch Program',
+      program: '${file}'
+    };
+
+    vscode.debug.startDebugging(undefined, debugConfig).then(success => {
+      if (success) {
+        vscode.window.showInformationMessage('デバッグが正常に開始されました');
+      } else {
+        vscode.window.showErrorMessage('デバッグの開始に失敗しました');
+      }
+    });
+  });
+
+  // テストコマンド
+  let runTestCommand = vscode.commands.registerCommand('code247.runTestCommand', () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showErrorMessage('ファイルが開かれていません');
+      return;
+    }
+
+    const filePath = editor.document.uri.fsPath;
+    const fileExtension = path.extname(filePath);
+
+    let testCommand: string | null = getTestCommandByExtension(fileExtension);
+
+    if (!testCommand) {
+      testCommand = detectProjectTestFramework(filePath);
+    }
+
+    if (testCommand) {
+      runTerminalCommand(testCommand);
+    } else {
+      vscode.window.showErrorMessage('サポートされていない言語です');
+    }
+  });
+
+  addStatusBarItem(context, 'code247.runCommand', '$(play) 実行', 100);
+  addStatusBarItem(context, 'code247.debugCommand', '$(bug) デバッグ', 101);
+  addStatusBarItem(context, 'code247.runTestCommand', '$(beaker) テスト', 102);
+
+  context.subscriptions.push(runCommand);
+  context.subscriptions.push(debugCommand);
+  context.subscriptions.push(runTestCommand);
 }
 
 class Code247Panel {
   public static currentPanel: Code247Panel | undefined;
-
   public static readonly viewType = "windowMode";
   public static readonly title = "code247";
   public static joystickLastStartedAt: Date | null = null;
@@ -42,46 +83,16 @@ class Code247Panel {
   private _disposables: vscode.Disposable[] = [];
   private radialMenuDecoration: vscode.TextEditorDecorationType[] = [];
 
-  /**
-   * 1度も開いたことがない場合は新しく作成し、開いている場合は表示する
-   */
   public static createOrShow(extensionUri: vscode.Uri) {
-    /**
-     * https://code.visualstudio.com/api/references/vscode-api#window
-     * activeTextEditor
-     * 現在アクティブなエディタを取得する
-     * フォーカスがあるエディタか、フォーカスがない場合は最後にフォーカスがあったエディタを取得する
-     * ない場合は undefined を返す
-     */
     const column = vscode.window.activeTextEditor
-      ? /**
-         * https://code.visualstudio.com/api/references/vscode-api#ViewColumn
-         * ViewColumn
-         * ウィンドウ内のエディタの位置
-         */
-        vscode.window.activeTextEditor.viewColumn
+      ? vscode.window.activeTextEditor.viewColumn
       : undefined;
 
     if (Code247Panel.currentPanel) {
-      /**
-       * https://code.visualstudio.com/api/references/vscode-api#WebviewPanel
-       * reveal
-       * パネルを指定した位置に表示する
-       * @param viewColumn パネルの表示位置
-       */
       Code247Panel.currentPanel._panel.reveal(column);
       return;
     }
 
-    /**
-     * https://code.visualstudio.com/api/references/vscode-api#window.createWebviewPanel
-     * createWebviewPanel
-     * webviewパネルを作成して表示する
-     * @param viewType パネルの識別子
-     * @param title パネルのタイトル
-     * @param showOptions パネルの表示位置
-     * @param options パネルのオプション
-     */
     const panel = vscode.window.createWebviewPanel(
       Code247Panel.viewType,
       Code247Panel.title,
@@ -96,27 +107,10 @@ class Code247Panel {
 
   public constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
     this._panel = panel;
-    /**
-     * https://code.visualstudio.com/api/references/vscode-api#Webview
-     * webview.html
-     * パネルのwebview
-     * ここにHTMLを入れることで表示することができる
-     */
     this._setWebviewContent(this._panel.webview, extensionUri);
 
-    /**
-     * https://code.visualstudio.com/api/references/vscode-api#WebviewPanel
-     * onDidDispose
-     * ユーザーがパネルが閉じたときに呼ばれる
-     * @param callback パネルが閉じたときに呼ばれる関数
-     */
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
-    /**
-     * https://code.visualstudio.com/api/references/vscode-api#Webview
-     * onDidReceiveMessage
-     * @param callback messageを受け取ったときに呼ばれる関数
-     */
     this._panel.webview.onDidReceiveMessage(
       (message) => {
         const editor = vscode.window.activeTextEditor;
@@ -213,7 +207,6 @@ class Code247Panel {
 
     const angle = Math.atan2(y, x) * (180 / Math.PI);
 
-    // 45度区切り
     let selectedMenu = 0;
     if (angle >= -90 && angle < -45) {
       selectedMenu = 0;
@@ -302,3 +295,66 @@ class Code247Panel {
     }
   }
 }
+
+// ステータスバーにアイテムを追加する関数
+function addStatusBarItem(context: vscode.ExtensionContext, command: string, text: string, priority: number) {
+  let statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, priority);
+  statusBarItem.command = command;
+  statusBarItem.text = text;
+  statusBarItem.show();
+  context.subscriptions.push(statusBarItem);
+}
+
+// ファイルの拡張子に基づいてテストコマンドを返す
+function getTestCommandByExtension(extension: string): string | null {
+  switch (extension) {
+    case '.js':
+    case '.ts':
+      return 'npm test';  // JavaScript/TypeScript
+    case '.py':
+      return 'pytest';    // Python
+    case '.go':
+      return 'go test';   // Go
+    case '.java':
+      return 'mvn test';  // Java
+    default:
+      return null;
+  }
+}
+
+// プロジェクトファイルを検出してテストフレームワークを決定
+function detectProjectTestFramework(filePath: string): string | null {
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (!workspaceFolders) {
+    return null;
+  }
+
+  const workspacePath = workspaceFolders[0].uri.fsPath;
+
+  if (fs.existsSync(path.join(workspacePath, 'package.json'))) {
+    return 'npm test'; // Node.js
+  }
+
+  if (fs.existsSync(path.join(workspacePath, 'pytest.ini'))) {
+    return 'pytest';   // Python
+  }
+
+  if (fs.existsSync(path.join(workspacePath, 'go.mod'))) {
+    return 'go test';  // Go
+  }
+
+  if (fs.existsSync(path.join(workspacePath, 'pom.xml'))) {
+    return 'mvn test'; // Java
+  }
+
+  return null;
+}
+
+// ターミナルでコマンドを実行
+function runTerminalCommand(command: string) {
+  const terminal = vscode.window.createTerminal('Test Runner');
+  terminal.show();
+  terminal.sendText(command);
+}
+
+export function deactivate() {}

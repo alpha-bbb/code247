@@ -19,11 +19,42 @@
   "contributes": {
     "commands": [
       {
+        "command": "extension.runCommand",
+        "title": "Run Program"
+      },
+      {
+        "command": "extension.debugCommand",
+        "title": "Debug Program"
+      },
+      {
+        "command": "extension.runTestCommand",
+        "title": "Run Tests"
+      },
+      {
         "command": "code247.start",
         "title": "start",
         "category": "code247"
       }
     ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "extension.runCommand",
+          "when": "editorTextFocus",
+          "group": "navigation"
+        },
+        {
+          "command": "extension.debugCommand",
+          "when": "editorTextFocus",
+          "group": "navigation"
+        },
+        {
+          "command": "extension.runTestCommand",
+          "when": "editorTextFocus",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "code247",
       "properties": {
