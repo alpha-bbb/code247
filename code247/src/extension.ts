@@ -35,10 +35,12 @@ class Code247Panel {
 
   public static readonly viewType = "windowMode";
   public static readonly title = "code247";
+  public static joystickLastStartedAt: Date | null = null;
+  public static isDoubleTap: boolean = false;
 
   private readonly _panel: vscode.WebviewPanel;
   private _disposables: vscode.Disposable[] = [];
-  private radialMenuDecoration: vscode.TextEditorDecorationType | null = null;
+  private radialMenuDecoration: vscode.TextEditorDecorationType[] = [];
 
   /**
    * 1度も開いたことがない場合は新しく作成し、開いている場合は表示する
@@ -117,37 +119,10 @@ class Code247Panel {
      */
     this._panel.webview.onDidReceiveMessage(
       (message) => {
-        vscode.window.showInformationMessage("Hello", message);
         const editor = vscode.window.activeTextEditor;
         switch (message.command) {
-          case "startRadialMenu":
-            vscode.window.showInformationMessage("joystickStart", message.data);
-            if (editor) {
-              this.showRadialMenu(
-                editor,
-                message.data.position.x,
-                message.data.position.y,
-              );
-            }
-            break;
-          case "updateRadialMenu":
-            vscode.window.showInformationMessage(
-              "joystickUpdate",
-              message.data,
-            );
-            if (editor) {
-              this.updateRadialMenu(
-                editor,
-                message.data.position.x,
-                message.data.position.y,
-              );
-            }
-            break;
-          case "endRadialMenu":
-            vscode.window.showInformationMessage("joystickEnd", message.data);
-            if (editor) {
-              this.hideRadialMenu(editor);
-            }
+          case "joystick":
+            this.joystick(message, editor);
             break;
         }
       },
@@ -180,8 +155,60 @@ class Code247Panel {
     return htmlContent;
   }
 
+  private joystick(message: any, editor: vscode.TextEditor | undefined) {
+    switch (message.data.mode) {
+      case "menu":
+        this.joystickMenu(message, editor);
+        break;
+    }
+  }
+
+  private joystickMenu(message: any, editor: vscode.TextEditor | undefined) {
+    switch (message.data.status) {
+      case "start":
+        if (Code247Panel.joystickLastStartedAt) {
+          const now = new Date();
+          const diff =
+            now.getTime() - Code247Panel.joystickLastStartedAt.getTime();
+          let joystickDoubleTapInterval = vscode.workspace
+            .getConfiguration("code247")
+            .get<number>("joystickDoubleTapInterval", 1000);
+          if (diff < joystickDoubleTapInterval) {
+            Code247Panel.isDoubleTap = true;
+          } else {
+            Code247Panel.isDoubleTap = false;
+          }
+        }
+        if (editor) {
+          this.showRadialMenu(
+            editor,
+            message.data.position.x,
+            message.data.position.y,
+          );
+        }
+        Code247Panel.joystickLastStartedAt = new Date();
+        break;
+      case "update":
+        if (editor) {
+          this.updateRadialMenu(
+            editor,
+            message.data.position.x,
+            message.data.position.y,
+          );
+        }
+        break;
+      case "end":
+        if (editor) {
+          this.hideRadialMenu(editor);
+        }
+        break;
+    }
+  }
+
   private showRadialMenu(editor: vscode.TextEditor, x: number, y: number) {
     const rgbaGreen = "rgba(115, 209, 68, 0.3)";
+    const rgbaOrange = "rgba(255, 211, 72, 0.3)";
+    const rgbaFront = Code247Panel.isDoubleTap ? rgbaOrange : rgbaGreen;
     const rgbaBlank = "rgba(255, 255, 255, 0.1)";
 
     const angle = Math.atan2(y, x) * (180 / Math.PI);
@@ -207,14 +234,14 @@ class Code247Panel {
     }
 
     const quadrantColors = [
-      selectedMenu === 0 ? rgbaGreen : rgbaBlank,
-      selectedMenu === 1 ? rgbaGreen : rgbaBlank,
-      selectedMenu === 2 ? rgbaGreen : rgbaBlank,
-      selectedMenu === 3 ? rgbaGreen : rgbaBlank,
-      selectedMenu === 4 ? rgbaGreen : rgbaBlank,
-      selectedMenu === 5 ? rgbaGreen : rgbaBlank,
-      selectedMenu === 6 ? rgbaGreen : rgbaBlank,
-      selectedMenu === 7 ? rgbaGreen : rgbaBlank,
+      selectedMenu === 0 ? rgbaFront : rgbaBlank,
+      selectedMenu === 1 ? rgbaFront : rgbaBlank,
+      selectedMenu === 2 ? rgbaFront : rgbaBlank,
+      selectedMenu === 3 ? rgbaFront : rgbaBlank,
+      selectedMenu === 4 ? rgbaFront : rgbaBlank,
+      selectedMenu === 5 ? rgbaFront : rgbaBlank,
+      selectedMenu === 6 ? rgbaFront : rgbaBlank,
+      selectedMenu === 7 ? rgbaFront : rgbaBlank,
     ];
 
     const cssString = `
@@ -234,31 +261,34 @@ class Code247Panel {
   );
   `;
 
-    this.radialMenuDecoration = vscode.window.createTextEditorDecorationType({
-      before: {
-        contentText: "",
-        textDecoration: `none; ${cssString}`,
-      },
-      isWholeLine: false,
-    });
+    this.radialMenuDecoration.push(
+      vscode.window.createTextEditorDecorationType({
+        before: {
+          contentText: "",
+          textDecoration: `none; ${cssString}`,
+        },
+        isWholeLine: false,
+      }),
+    );
 
     const position = new vscode.Position(0, 0);
-    editor.setDecorations(this.radialMenuDecoration, [
-      { range: new vscode.Range(position, position) },
-    ]);
+    editor.setDecorations(
+      this.radialMenuDecoration[this.radialMenuDecoration.length - 1],
+      [{ range: new vscode.Range(position, position) }],
+    );
   }
 
   private updateRadialMenu(editor: vscode.TextEditor, x: number, y: number) {
-    this.hideRadialMenu(editor);
     this.showRadialMenu(editor, x, y);
+    this.hideRadialMenu(editor);
   }
 
   private hideRadialMenu(editor: vscode.TextEditor) {
-    if (this.radialMenuDecoration === null) {
+    if (this.radialMenuDecoration.length === 0) {
       return;
     }
-    editor.setDecorations(this.radialMenuDecoration, []);
-    this.radialMenuDecoration = null;
+    const decorator = this.radialMenuDecoration.shift();
+    decorator?.dispose();
   }
 
   public dispose() {
