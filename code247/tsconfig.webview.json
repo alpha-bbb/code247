@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "outDir": "./out", // コンパイル出力ディレクトリ
+        "lib": [
+            "ESNext",
+            "DOM"
+        ], // Webview 用に DOM ライブラリを追加
+        "strict": true,
+        "alwaysStrict": true,
+        "sourceMap": true,
+        "rootDir": "src",
+        "moduleResolution": "node"
+    },
+    "include": [
+        "src/webview/**/*.ts",
+        "src/types/**/*.ts"
+    ],
+}

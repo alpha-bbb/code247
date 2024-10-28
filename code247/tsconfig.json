@@ -1,19 +1,15 @@
 {
-  "compilerOptions": {
-    "module": "Node16",
-    "target": "ES2022",
-    "outDir": "out",
-    "lib": [
-      "ES2022"
-    ],
-    "sourceMap": true,
-    "rootDir": "src",
-    "strict": true,
-    "baseUrl": "./",
-    "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    }
-  }
+    "compilerOptions": {
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "outDir": "out",
+        "lib": [
+            "es2016",
+            "dom"
+        ],
+        "target": "esnext"
+    },
+    "include": [
+        "src"
+    ]
 }
