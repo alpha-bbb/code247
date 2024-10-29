@@ -13,13 +13,13 @@
     ],
     "sourceMap": true,
     "rootDir": "src",
-    "moduleResolution": "nodenext"
+    "moduleResolution": "node"
   },
   "exclude": [
     "node_modules",
     ".vscode-test",
     "test-fixtures",
-    // "src/webview/**/*.ts",
+    "src/webview/**/*.ts",
   ],
   "include": [
     "src/**/*.ts",

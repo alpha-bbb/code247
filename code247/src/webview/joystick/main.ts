@@ -1,4 +1,4 @@
-import { Position } from "../../types/types";
+import { Position, WebviewMessage } from "../../types/types";
 
 document.addEventListener("DOMContentLoaded", () => {
   const vscode = acquireVsCodeApi();
@@ -19,53 +19,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
   manager.on("start", (evt: any, data: any) => {
     startPosition = { x: data.position.x, y: data.position.y };
-    // const message: WebviewMessage = {
-    //   command: "joystick",
-    //   data: {
-    //     mode: "menu",
-    //     status: "start",
-    //     position: startPosition,
-    //   },
-    // };
-    // vscode.postMessage(message);
-    vscode.postMessage({
+    const message: WebviewMessage = {
       command: "joystick",
-      data: { mode: "menu", status: "start", position: startPosition },
-    });
+      data: {
+        mode: "menu",
+        status: "start",
+        position: startPosition,
+      },
+    };
+    vscode.postMessage(message);
   });
 
   manager.on("move", (evt: any, data: any) => {
     const relativeX = data.position.x - startPosition.x;
     const relativeY = data.position.y - startPosition.y;
     movePosition = { x: relativeX, y: relativeY };
-    // const message: WebviewMessage = {
-    //   command: "joystick",
-    //   data: {
-    //     mode: "menu",
-    //     status: "update",
-    //     position: movePosition,
-    //   },
-    // };
-    // vscode.postMessage(message);
-    vscode.postMessage({
+    const message: WebviewMessage = {
       command: "joystick",
-      data: { mode: "menu", status: "update", position: movePosition },
-    });
+      data: {
+        mode: "menu",
+        status: "update",
+        position: movePosition,
+      },
+    };
+    vscode.postMessage(message);
   });
 
   manager.on("end", (evt: any, data: any) => {
-    // const message: WebviewMessage = {
-    //   command: "joystick",
-    //   data: {
-    //     mode: "menu",
-    //     status: "end",
-    //     position: movePosition,
-    //   },
-    // };
-    // vscode.postMessage(message);
-    vscode.postMessage({
+    const message: WebviewMessage = {
       command: "joystick",
-      data: { mode: "menu", status: "end", position: movePosition },
-    });
+      data: {
+        mode: "menu",
+        status: "end",
+        position: movePosition,
+      },
+    };
+    vscode.postMessage(message);
   });
 });

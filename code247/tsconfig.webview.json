@@ -2,11 +2,11 @@
     "compilerOptions": {
         "target": "ESNext",
         "module": "ESNext",
-        "outDir": "./out", // コンパイル出力ディレクトリ
+        "outDir": "./out",
         "lib": [
             "ESNext",
             "DOM"
-        ], // Webview 用に DOM ライブラリを追加
+        ],
         "strict": true,
         "alwaysStrict": true,
         "sourceMap": true,

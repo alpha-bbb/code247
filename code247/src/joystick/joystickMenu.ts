@@ -43,9 +43,7 @@ export function joystickMenu(
       }
       break;
     case "end":
-      if (editor) {
-        hideRadialMenu(code247Panel, editor);
-      }
+      hideRadialMenu(code247Panel);
       break;
   }
 }
@@ -137,10 +135,10 @@ function updateRadialMenu(
   y: number,
 ) {
   showRadialMenu(code247Panel, editor, x, y);
-  hideRadialMenu(code247Panel, editor);
+  hideRadialMenu(code247Panel);
 }
 
-function hideRadialMenu(code247Panel: Code247Panel, editor: TextEditor) {
+function hideRadialMenu(code247Panel: Code247Panel) {
   if (code247Panel.radialMenuDecoration.length === 0) {
     return;
   }
