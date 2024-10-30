@@ -40,6 +40,27 @@
           ],
           "default": 1000,
           "description": "code247 Joystick Double Tap Interval"
+        },
+        "code247.radialMenuPrimaryColor": {
+          "type": [
+            "string"
+          ],
+          "default": "#73D144",
+          "description": "code247 Radial Menu Primary Color"
+        },
+        "code247.radialMenuSecondaryColor": {
+          "type": [
+            "string"
+          ],
+          "default": "#FFD348",
+          "description": "code247 Radial Menu Secondary Color"
+        },
+        "code247.radialMenuBackgroundColor": {
+          "type": [
+            "string"
+          ],
+          "default": "#FFFFFF",
+          "description": "code247 Radial Menu Background Color"
         }
       }
     }

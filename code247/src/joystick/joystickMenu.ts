@@ -48,49 +48,90 @@ export function joystickMenu(
   }
 }
 
+/**
+ * 360度の円周をdivisionsで分割したときに、angleがどのメニューを選択しているかを返す
+ * @param angle 角度
+ * @param divisions 分割数
+ */
+function getSelectedMenu(angle: number, divisions: number): number {
+  const sliceAngle = 360 / divisions;
+  // 0度が右方向なので、90度を加算している
+  const normalizedAngle = (angle + 360 + 90) % 360;
+  return Math.floor(normalizedAngle / sliceAngle);
+}
+
+/**
+ * 16進数のカラーコードをRGBAに変換する
+ * @param hex 16進数のカラーコード
+ * @param alpha 透明度
+ * @returns RGBAのカラーコード
+ */
+function hexToRgba(hex: string, alpha: number = 1): string {
+  hex = hex.replace(/^#/, "");
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/**
+ * 選択されたメニューに選択色を適用したconic-gradientに記載するCSS文字列を生成する
+ * @param selectedMenu 選択されたメニュー
+ * @param divisions 分割数
+ * @param focusColor 選択色
+ * @param backgroundColor 背景色
+ */
+function generateQuadrantGradient(
+  selectedMenu: number,
+  divisions: number,
+  focusColor: string,
+  backgroundColor: string,
+) {
+  const quadrantColors = Array.from({ length: divisions }, (_, i) =>
+    i === selectedMenu ? focusColor : backgroundColor,
+  );
+
+  const cssConicGradient = Array.from({ length: divisions }, (_, i) => {
+    const startAngle = (i * 360) / divisions;
+    const endAngle = ((i + 1) * 360) / divisions;
+    return `${quadrantColors[i]} ${startAngle}deg ${endAngle}deg`;
+  });
+
+  return cssConicGradient.join(",");
+}
+
 function showRadialMenu(
   code247Panel: Code247Panel,
   editor: TextEditor,
   x: number,
   y: number,
 ) {
-  const rgbaGreen = "rgba(115, 209, 68, 0.3)";
-  const rgbaOrange = "rgba(255, 211, 72, 0.3)";
-  const rgbaFront = Code247Panel.isDoubleTap ? rgbaOrange : rgbaGreen;
-  const rgbaBlank = "rgba(255, 255, 255, 0.1)";
+  const config = workspace.getConfiguration("code247");
+  // primary
+  const primaryColorHex = config.get<string>(
+    "radialMenuPrimaryColor",
+    "#73D144",
+  );
+  const primaryColor = hexToRgba(primaryColorHex, 0.3);
+  // secondary
+  const secondaryColorHex = config.get<string>(
+    "radialMenuSecondaryColor",
+    "#FFD348",
+  );
+  const secondaryColor = hexToRgba(secondaryColorHex, 0.3);
+  // background
+  const backgroundColorHex = config.get<string>(
+    "radialMenuBackgroundColor",
+    "#FFFFFF",
+  );
+  const backgroundColor = hexToRgba(backgroundColorHex, 0.1);
+
+  const focusColor = Code247Panel.isDoubleTap ? secondaryColor : primaryColor;
+  const divisions = 8;
 
   const angle = Math.atan2(y, x) * (180 / Math.PI);
 
-  // 45度区切り
-  let selectedMenu = 0;
-  if (angle >= -90 && angle < -45) {
-    selectedMenu = 0;
-  } else if (angle >= -45 && angle < 0) {
-    selectedMenu = 1;
-  } else if (angle >= 0 && angle < 45) {
-    selectedMenu = 2;
-  } else if (angle >= 45 && angle < 90) {
-    selectedMenu = 3;
-  } else if (angle >= 90 && angle < 135) {
-    selectedMenu = 4;
-  } else if (angle >= 135 && angle <= 180) {
-    selectedMenu = 5;
-  } else if (angle >= -180 && angle < -135) {
-    selectedMenu = 6;
-  } else if (angle >= -135 && angle < -90) {
-    selectedMenu = 7;
-  }
-
-  const quadrantColors = [
-    selectedMenu === 0 ? rgbaFront : rgbaBlank,
-    selectedMenu === 1 ? rgbaFront : rgbaBlank,
-    selectedMenu === 2 ? rgbaFront : rgbaBlank,
-    selectedMenu === 3 ? rgbaFront : rgbaBlank,
-    selectedMenu === 4 ? rgbaFront : rgbaBlank,
-    selectedMenu === 5 ? rgbaFront : rgbaBlank,
-    selectedMenu === 6 ? rgbaFront : rgbaBlank,
-    selectedMenu === 7 ? rgbaFront : rgbaBlank,
-  ];
+  let selectedMenu = getSelectedMenu(angle, divisions);
 
   const cssString = `
   position: absolute;
@@ -98,14 +139,12 @@ function showRadialMenu(
   height: 300px;
   border-radius: 50%;
   background: conic-gradient(
-    ${quadrantColors[0]} 0deg 45deg,
-    ${quadrantColors[1]} 45deg 90deg,
-    ${quadrantColors[2]} 90deg 135deg,
-    ${quadrantColors[3]} 135deg 180deg,
-    ${quadrantColors[4]} 180deg 225deg,
-    ${quadrantColors[5]} 225deg 270deg,
-    ${quadrantColors[6]} 270deg 315deg,
-    ${quadrantColors[7]} 315deg 360deg
+    ${generateQuadrantGradient(
+      selectedMenu,
+      divisions,
+      focusColor,
+      backgroundColor,
+    )}
   );
   `;
 
