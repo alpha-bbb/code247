@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "outDir": "./out",
+        "lib": [
+            "ESNext",
+            "DOM"
+        ],
+        "strict": true,
+        "alwaysStrict": true,
+        "sourceMap": true,
+        "rootDir": "src",
+        "moduleResolution": "node"
+    },
+    "include": [
+        "src/webview/**/*.ts",
+        "src/types/**/*.ts"
+    ],
+}

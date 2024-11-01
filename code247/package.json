@@ -40,13 +40,36 @@
           ],
           "default": 1000,
           "description": "code247 Joystick Double Tap Interval"
+        },
+        "code247.radialMenuPrimaryColor": {
+          "type": [
+            "string"
+          ],
+          "default": "#73D144",
+          "description": "code247 Radial Menu Primary Color"
+        },
+        "code247.radialMenuSecondaryColor": {
+          "type": [
+            "string"
+          ],
+          "default": "#FFD348",
+          "description": "code247 Radial Menu Secondary Color"
+        },
+        "code247.radialMenuBackgroundColor": {
+          "type": [
+            "string"
+          ],
+          "default": "#FFFFFF",
+          "description": "code247 Radial Menu Background Color"
         }
       }
     }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile:extension": "tsc -p ./tsconfig.extension.json",
+    "compile:webview": "tsc -p ./tsconfig.webview.json",
+    "compile": "npm run compile:extension && npm run compile:webview",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
@@ -56,13 +79,15 @@
   "devDependencies": {
     "@types/mocha": "^10.0.7",
     "@types/node": "20.x",
-    "@types/vscode": "^1.93.0",
+    "@types/vscode": "^1.94.0",
+    "@types/vscode-webview": "^1.57.5",
     "@typescript-eslint/eslint-plugin": "^8.3.0",
     "@typescript-eslint/parser": "^8.3.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
     "@vscode/test-web": "^0.0.62",
     "eslint": "^9.9.1",
+    "nipplejs": "^0.10.2",
     "prettier": "3.3.3",
     "typescript": "^5.5.4"
   }
