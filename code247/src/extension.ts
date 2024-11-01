@@ -14,10 +14,22 @@ export function activate(context: vscode.ExtensionContext) {
 
   // 実行コマンド
   let runCommand = vscode.commands.registerCommand('code247.runCommand', () => {
-    vscode.window.showInformationMessage('プログラムを実行します！');
-    const terminal = vscode.window.createTerminal('Run Program');
-    terminal.show();
-    terminal.sendText('node ${file}'); // ここでプログラムの実行コマンドを変更できます
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showErrorMessage('ファイルが開かれていません');
+      return;
+    }
+
+    const filePath = editor.document.uri.fsPath;
+    const fileExtension = path.extname(filePath);
+
+    let runCommand: string | null = getRunCommandByExtension(fileExtension, filePath);
+
+    if (runCommand) {
+      runTerminalCommand(runCommand);
+    } else {
+      vscode.window.showErrorMessage('サポートされていない言語です');
+    }
   });
 
   // デバッグコマンド
@@ -117,6 +129,12 @@ class Code247Panel {
         switch (message.command) {
           case "joystick":
             this.joystick(message, editor);
+            break;
+          case "runCommand":
+            vscode.commands.executeCommand('code247.runCommand');
+            break;
+          case "runTestCommand":
+            vscode.commands.executeCommand('code247.runTestCommand');
             break;
         }
       },
@@ -305,6 +323,33 @@ function addStatusBarItem(context: vscode.ExtensionContext, command: string, tex
   context.subscriptions.push(statusBarItem);
 }
 
+// ファイルの拡張子に基づいて実行コマンドを返す
+function getRunCommandByExtension(extension: string, filePath: string): string | null {
+  switch (extension) {
+    case '.js':
+      return `node ${filePath}`;  // JavaScript
+    case '.ts':
+      return `ts-node ${filePath}`;  // TypeScript
+    case '.py':
+      return `python ${filePath}`;    // Python
+    case '.go':
+      return `go run ${filePath}`;   // Go
+    case '.java':
+      return `javac ${filePath} && java ${path.basename(filePath, '.java')}`;  // Java
+    case '.rb':
+      return `ruby ${filePath}`;     // Ruby
+    case '.php':
+      return `php ${filePath}`;   // PHP
+    case '.cs':
+      return `dotnet run ${filePath}`; // C#
+    case '.cpp':
+    case '.c':
+      return `gcc ${filePath} -o ${path.basename(filePath, extension)} && ./${path.basename(filePath, extension)}`; // C/C++
+    default:
+      return null;
+  }
+}
+
 // ファイルの拡張子に基づいてテストコマンドを返す
 function getTestCommandByExtension(extension: string): string | null {
   switch (extension) {
@@ -317,6 +362,15 @@ function getTestCommandByExtension(extension: string): string | null {
       return 'go test';   // Go
     case '.java':
       return 'mvn test';  // Java
+    case '.rb':
+      return 'rspec';     // Ruby
+    case '.php':
+      return 'phpunit';   // PHP
+    case '.cs':
+      return 'dotnet test'; // C#
+    case '.cpp':
+    case '.c':
+      return 'make test'; // C/C++
     default:
       return null;
   }
@@ -347,12 +401,28 @@ function detectProjectTestFramework(filePath: string): string | null {
     return 'mvn test'; // Java
   }
 
+  if (fs.existsSync(path.join(workspacePath, 'Gemfile'))) {
+    return 'rspec';    // Ruby
+  }
+
+  if (fs.existsSync(path.join(workspacePath, 'composer.json'))) {
+    return 'phpunit';  // PHP
+  }
+
+  if (fs.existsSync(path.join(workspacePath, 'Makefile'))) {
+    return 'make test'; // C/C++
+  }
+
+  if (fs.existsSync(path.join(workspacePath, 'project.json'))) {
+    return 'dotnet test'; // C#
+  }
+
   return null;
 }
 
 // ターミナルでコマンドを実行
 function runTerminalCommand(command: string) {
-  const terminal = vscode.window.createTerminal('Test Runner');
+  const terminal = vscode.window.createTerminal('Run Program');
   terminal.show();
   terminal.sendText(command);
 }
