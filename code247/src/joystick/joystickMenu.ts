@@ -1,6 +1,7 @@
 import { Code247Panel } from "../panel/core";
-import { Position, Range, TextEditor, window, workspace } from "vscode";
+import { Position, Range, TextEditor, window, workspace, env } from "vscode";
 import { WebviewMessage } from "../types/types";
+import { endSelection, startSelection } from "./joystickSelection";
 
 export function joystickMenu(
   code247Panel: Code247Panel,
@@ -40,10 +41,17 @@ export function joystickMenu(
           message.data.position.x,
           message.data.position.y,
         );
+        startSelection(
+          code247Panel,
+          editor,
+          message.data.position.x,
+          message.data.position.y,
+        );
       }
       break;
     case "end":
-      hideRadialMenu(code247Panel);
+      handleShortcutSelection(code247Panel, editor, message.data.position);
+      endSelection();
       break;
   }
 }
@@ -183,4 +191,53 @@ function hideRadialMenu(code247Panel: Code247Panel) {
   }
   const decorator = code247Panel.radialMenuDecoration.shift();
   decorator?.dispose();
+}
+
+function handleShortcutSelection(
+  code247Panel: Code247Panel,
+  editor: TextEditor | undefined,
+  position: { x: number; y: number },
+) {
+  const angle = Math.atan2(position.y, position.x) * (180 / Math.PI);
+  const selectedMenu = getSelectedMenu(angle, 8);
+
+  const selectedShortcut = code247Panel.shortcuts[selectedMenu];
+  if (selectedShortcut) {
+    executeCommand(selectedShortcut.command, editor);
+  }
+
+  hideRadialMenu(code247Panel);
+}
+
+function executeCommand(command: string, editor: TextEditor | undefined) {
+  switch (command) {
+    case "code247.runTests":
+      window.showInformationMessage("テストを実行します");
+      break;
+    case "code247.openDebugger":
+      window.showInformationMessage("デバッガを開きます");
+      break;
+    case "code247.openTerminal":
+      window.showInformationMessage("ターミナルを開きます");
+      break;
+    case "code247.copy":
+      if (editor) {
+        const selection = editor.selection;
+        const text = editor.document.getText(selection);
+        env.clipboard.writeText(text);
+        window.showInformationMessage("コピーしました");
+      }
+
+      break;
+    case "code247.paste":
+      if (editor) {
+        env.clipboard.readText().then((text) => {
+          editor.edit((editBuilder) => {
+            editBuilder.insert(editor.selection.active, text);
+          });
+          window.showInformationMessage("ペーストしました");
+        });
+      }
+      break;
+  }
 }

@@ -5,10 +5,12 @@ import {
   Uri,
   window,
   ViewColumn,
+  Position,
 } from "vscode";
 import { setWebviewJoystick } from "../webview";
 import { message } from "../message";
-import { WebviewMessage } from "../types/types";
+import { ShortcutsOption, WebviewMessage } from "../types/types";
+import { shortcuts } from "../const/shortcutsOption";
 
 export class Code247Panel {
   public static currentPanel: Code247Panel | undefined;
@@ -17,10 +19,37 @@ export class Code247Panel {
   public static readonly title = "code247";
   public static joystickLastStartedAt: Date | null = null;
   public static isDoubleTap: boolean = false;
+  public static joystickLastCursorMove: Date | null = null;
+  public static cursorMoveSetinterval: NodeJS.Timeout | null = null;
+  public static cursorPosition = new Position(0, 0);
 
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
+  private _shortcuts: ShortcutsOption[] = shortcuts;
   public radialMenuDecoration: TextEditorDecorationType[] = [];
+
+  /**
+   * shortcutsを取得する
+   */
+  get shortcuts(): ShortcutsOption[] {
+    return this._shortcuts;
+  }
+
+  /**
+   * shortcutsを設定する
+   */
+  set shortcuts(value: ShortcutsOption) {
+    this._shortcuts.push(value);
+  }
+
+  /**
+   * shortcutを取り除く
+   */
+  removeShortcut(value: ShortcutsOption) {
+    this._shortcuts = this._shortcuts.filter((shortcut) => {
+      return shortcut.command !== value.command;
+    });
+  }
 
   /**
    * 1度も開いたことがない場合は新しく作成し、開いている場合は表示する

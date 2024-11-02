@@ -61,6 +61,20 @@
           ],
           "default": "#FFFFFF",
           "description": "code247 Radial Menu Background Color"
+        },
+        "code247.joystickCenterRange": {
+          "type": [
+            "number"
+          ],
+          "default": 10,
+          "description": "code247 Joystick Center Range"
+        },
+        "code247.joystickCursorSpeed": {
+          "type": [
+            "number"
+          ],
+          "default": 50,
+          "description": "code247 Joystick Center Range"
         }
       }
     }
