@@ -5,6 +5,7 @@ import {
   Uri,
   window,
   ViewColumn,
+  Position,
 } from "vscode";
 import { setWebviewJoystick } from "../webview";
 import { message } from "../message";
@@ -17,6 +18,9 @@ export class Code247Panel {
   public static readonly title = "code247";
   public static joystickLastStartedAt: Date | null = null;
   public static isDoubleTap: boolean = false;
+  public static joystickLastCursorMove: Date | null = null;
+  public static cursorMoveSetinterval: NodeJS.Timeout | null = null;
+  public static cursorPosition = new Position(0, 0);
 
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
