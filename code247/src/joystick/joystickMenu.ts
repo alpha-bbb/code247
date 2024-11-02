@@ -1,6 +1,7 @@
 import { Code247Panel } from "../panel/core";
 import { Position, Range, TextEditor, window, workspace } from "vscode";
 import { WebviewMessage } from "../types/types";
+import { endSelection, startSelection } from "./joystickSelection";
 
 export function joystickMenu(
   code247Panel: Code247Panel,
@@ -40,10 +41,17 @@ export function joystickMenu(
           message.data.position.x,
           message.data.position.y,
         );
+        startSelection(
+          code247Panel,
+          editor,
+          message.data.position.x,
+          message.data.position.y,
+        );
       }
       break;
     case "end":
       hideRadialMenu(code247Panel);
+      endSelection();
       break;
   }
 }
