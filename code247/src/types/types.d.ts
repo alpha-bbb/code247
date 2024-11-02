@@ -16,3 +16,10 @@ export interface WebviewMessage {
   command: "joystick";
   data: JoystickData;
 }
+
+// ショートカットオプションの型
+export interface ShortcutsOption {
+  command: string;
+  icon: string;
+  label: string;
+}
