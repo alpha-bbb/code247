@@ -41,6 +41,20 @@
           "default": 1000,
           "description": "code247 Joystick Double Tap Interval"
         },
+        "code247.joystickCenterRange": {
+          "type": [
+            "number"
+          ],
+          "default": 10,
+          "description": "code247 Joystick Center Range"
+        },
+        "code247.joystickCursorSpeed": {
+          "type": [
+            "number"
+          ],
+          "default": 50,
+          "description": "code247 Joystick Center Range"
+        },
         "code247.radialMenuPrimaryColor": {
           "type": [
             "string"
